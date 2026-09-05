@@ -1,9 +1,13 @@
 #!/bin/bash
 #
-# extract.sh
-# Purpose: Downloads one or more raw CSV datasets defined by $CSV_URLS
+# etl.sh
+# Purpose: 
+#          - Downloads one or more raw CSV datasets defined by $CSV_URLS
 #          (see .env) and saves each into the raw/ directory, confirming
 #          success at every step.
+#          -Transform: renames Variable_code -> variable_code, selects
+#           year, Value, Units, variable_code, saves to Transformed/2023_year_finance.csv
+
 #
 # Author: Josephine Adah
 # Part of: CoreDataEngineers ETL pipeline
@@ -91,3 +95,40 @@ for URL in $CSV_URLS; do
 done
 
 echo "Extract stage complete."
+
+####Transformation stage
+# Purpose: Rename Variable_code to variable_code, select only
+# year, Value, Units, variable_code, and save to
+# Transformed/2023_year_finance.csv
+
+mkdir -p Transformed
+
+TRANSFORMED_FILE="Transformed/2023_year_finance.csv"
+RAW_INPUT_FILE="raw/annual_enterprise_survey_2023_financial_year_provisional.csv"
+
+echo "Starting transform stage..."
+
+awk '
+    BEGIN {
+        FPAT = "([^,]*)|(\"[^\"]*\")"
+    }
+    NR == 1 {
+        # This is the header row - find the position of each column we need
+        for (i = 1; i <= NF; i++) {
+            if ($i == "Year")          col_year = i
+            if ($i == "Value")         col_value = i
+            if ($i == "Units")         col_units = i
+            if ($i == "Variable_code") col_varcode = i
+        }
+        # Print our new, renamed header
+        print "year,Value,Units,variable_code"
+        next
+    }
+    {
+        # Print only the columns we need, in the order 
+        # we want using the positions we found in the header
+        print $col_year "," $col_value "," $col_units "," $col_varcode
+    }
+' "$RAW_INPUT_FILE" > "$TRANSFORMED_FILE"
+
+echo "Transform stage complete."
