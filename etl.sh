@@ -132,3 +132,44 @@ awk '
 ' "$RAW_INPUT_FILE" > "$TRANSFORMED_FILE"
 
 echo "Transform stage complete."
+
+# Load stage
+# Purpose: Copy the transformed file into Gold/, confirming success.
+
+mkdir -p Gold
+
+TRANSFORMED_FILE="Transformed/2023_year_finance.csv"
+GOLD_FILE="Gold/2023_year_finance.csv"
+
+echo "Starting load stage..."
+
+cp "$TRANSFORMED_FILE" "$GOLD_FILE"
+
+# Check 1: does the file exist in Gold/?
+if [ -f "$GOLD_FILE" ]; then
+    echo "CONFIRMED: File exists at $GOLD_FILE"
+else
+    echo "ERROR: File was not created at $GOLD_FILE"
+    exit 1
+fi
+
+# Check 2: is the file non-empty?
+if [ -s "$GOLD_FILE" ]; then
+    echo "CONFIRMED: File is non-empty."
+else
+    echo "ERROR: File exists but is empty (0 bytes)."
+    exit 1
+fi
+
+# Check 3: does the row count match the source? (verifies a clean copy)
+SOURCE_LINES=$(wc -l < "$TRANSFORMED_FILE")
+GOLD_LINES=$(wc -l < "$GOLD_FILE")
+
+if [ "$SOURCE_LINES" -eq "$GOLD_LINES" ]; then
+    echo "CONFIRMED: Row count matches ($GOLD_LINES lines)."
+else
+    echo "ERROR: Row count mismatch. Source: $SOURCE_LINES, Gold: $GOLD_LINES"
+    exit 1
+fi
+
+echo "Load stage complete."
