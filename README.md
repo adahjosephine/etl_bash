@@ -1,2 +1,2 @@
-# dataEngineeringETL
-Implementing the ETL process with git and bash
+# Implementing the Extract-Transform-Load Process with Git and Bash
+
